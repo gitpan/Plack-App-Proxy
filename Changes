@@ -1,5 +1,8 @@
 Revision history for Plack-App-Proxy
 
+0.02    Date/time
+        Forgot to include Makefile.PL
+
 0.01    Date/time
         First version, released on an unsuspecting world.
 
