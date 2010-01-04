@@ -1,15 +1,15 @@
 use Plack::App::Proxy;
 use Plack::Test;
 use Test::More tests => 5;
-    
+
 # regular static proxy
 test_psgi
-  app => Plack::App::Proxy->new(host => "http://www.cpan.org/"),
+  app => Plack::App::Proxy->new(host => "http://www.google.com/intl/en"),
   client => sub {
     my $cb = shift;
     my $req = HTTP::Request->new(GET => "http://localhost/index.html");
     my $res = $cb->($req);
-    like $res->content, qr/CPAN/, "static proxy";
+    like $res->content, qr/Google Search/, "static proxy";
   };
 
 # Get the proxy host from the Host header
@@ -21,9 +21,9 @@ test_psgi
   client => sub {
     my $cb = shift;
     my $req = HTTP::Request->new(
-      GET => "http://localhost/index.html", [Host => "www.cpan.org"]);
+      GET => "http://localhost/index.html", [Host => "www.google.com"]);
     my $res = $cb->($req);
-    is $res->request->header("host"), "www.cpan.org", "dynamic host";
+    is $res->request->header("host"), "www.google.com", "dynamic host";
   };
 
 # Host callback returns forbidden response instead of host
@@ -39,7 +39,7 @@ test_psgi
 # Don't rewrite the Host header
 test_psgi
   app => Plack::App::Proxy->new(
-    host => "http://www.cpan.org/",
+    host => "http://www.google.com/intl/en",
     preserve_host_header => 1,
   ),
   client => sub {
@@ -59,7 +59,7 @@ test_psgi
   }),
   client => sub {
     my $cb = shift;
-    my $req = HTTP::Request->new(GET => "http://localhost/http://www.cpan.org/");
+    my $req = HTTP::Request->new(GET => "http://localhost/http://www.google.com/intl/en/");
     my $res = $cb->($req);
-    like $res->content, qr/CPAN/, "url callback";
+    like $res->content, qr/Google Search/, "url callback";
   };

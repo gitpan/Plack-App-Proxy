@@ -6,7 +6,7 @@ use Plack::Util::Accessor qw/host url preserve_host_header/;
 use Plack::Request;
 use Try::Tiny;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub call {
   my ($self, $env) = @_;
@@ -30,6 +30,7 @@ sub call {
   else {
     die "Neither proxy host nor URL are specified";
   }
+  
   my @headers = ("X-Forwarded-For", $env->{REMOTE_ADDR});
   if ($self->preserve_host_header and $env->{HTTP_HOST}) {
     push @headers, "Host", $env->{HTTP_HOST};
@@ -71,7 +72,7 @@ sub async {
       headers => {@$headers},
       body => $content,
       want_body_handle => 1,
-      on_body => sub {
+      sub {
         my ($handle, $headers) = @_;
         if (!$handle or $headers->{Status} =~ /^59\d+/) {
           $respond->([502, ["Content-Type","text/html"], ["Gateway error"]]);
@@ -85,7 +86,7 @@ sub async {
           });
           $handle->on_error(sub{});
           $handle->on_read(sub {
-            my $data = $_[0]->rbuf;
+            my $data = delete $_[0]->{rbuf};
             $writer->write($data) if $data;
           });
         }
@@ -106,7 +107,7 @@ sub blocking {
 
 sub response_headers {
   my ($self, $headers) = @_;
-  my @valid_headers = qw/Content-Length Content-Type ETag
+  my @valid_headers = qw/Content-Length Content-Type Content-Encoding ETag
                       Last-Modified Cache-Control Expires/;
   if (ref $headers eq "HASH") {
     map {$_ => $headers->{lc $_}}
