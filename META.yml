@@ -20,10 +20,9 @@ no_index:
     - t
 requires:
   AnyEvent::HTTP: 1.44
-  LWP: 0
-  Plack: 0.9021
+  Plack: 0.9028
   Plack::Request: 0
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/leedo/Plack-App-Proxy.git
-version: 0.06
+version: 0.07

@@ -17,4 +17,3 @@ README
 t/00-load.t
 t/01-request.t
 t/02-gzipped.t
-t/03-streaming.t
