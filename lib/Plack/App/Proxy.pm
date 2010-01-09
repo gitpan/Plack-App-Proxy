@@ -7,7 +7,7 @@ use Plack::Request;
 use Try::Tiny;
 use AnyEvent::HTTP;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 sub call {
   my ($self, $env) = @_;
@@ -70,6 +70,8 @@ sub call {
             $handle->destroy;
             $writer->close;
             $cv->send;
+
+            undef $handle;  # free the cyclic reference.
           });
           $handle->on_error(sub{});
           $handle->on_read(sub {
@@ -77,6 +79,10 @@ sub call {
             $writer->write($data) if defined $data;
           });
         }
+
+        # Free the reference manually for perl 5.8.x 
+        # to avoid nested closure memory leaks.
+        undef $respond;
       }
     );
     $cv->recv unless $env->{"psgi.nonblocking"};
