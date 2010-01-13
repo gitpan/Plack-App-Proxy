@@ -7,7 +7,7 @@ use Plack::Request;
 use Try::Tiny;
 use AnyEvent::HTTP;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 sub call {
   my ($self, $env) = @_;
@@ -117,7 +117,7 @@ Plack::App::Proxy - proxy requests
  
   builder {
       # proxy all requests to 127.0.0.1:80
-      mount "/static" => Plack::App::Proxy->new(host => "127.0.0.1:80")->to_app;
+      mount "/static" => Plack::App::Proxy->new(host => "http://127.0.0.1:80")->to_app;
       
       # use some logic to decide which host to proxy to
       mount "/host" => Plack::App::Proxy->new(host => sub {
