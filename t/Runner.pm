@@ -7,6 +7,7 @@ use Plack::Loader;
 use Plack::Test;
 use Test::More;
 use Test::TCP;
+use LWP::UserAgent;
 use base Exporter::;
 our @EXPORT = qw(test_proxy run_tests);
 
@@ -27,6 +28,8 @@ sub test_proxy {
           app => $proxy->( $host, $port ),
           client => $client,
           host => $host,
+          # disable the auto redirection of LWP::UA
+          ua => LWP::UserAgent->new( max_redirect => 0 ),
       );
     },
     server => sub {
@@ -36,7 +39,7 @@ sub test_proxy {
       local $ENV{PLACK_SERVER} = 'Standalone';
 
       my $server = Plack::Loader->auto(port => $port, host => $host);
-      $server->run( $app );
+      $server->run($app);
     },
   );
 }
@@ -48,7 +51,7 @@ sub run_tests {
 
   # regular static proxy
   test_proxy(
-    proxy => sub { Plack::App::Proxy->new(host => "http://$_[0]:$_[1]") },
+    proxy => sub { Plack::App::Proxy->new(remote => "http://$_[0]:$_[1]") },
     app   => sub {
       my $env = shift;
       is $env->{PATH_INFO}, '/index.html', 'PATH_INFO accessed';
@@ -70,15 +73,16 @@ sub run_tests {
       proxy => sub {
         # save the app's host and port for client.
         ( $app_host, $app_port ) = @_;
-        Plack::App::Proxy->new( host => sub {
-          my $env = shift;
 
-          # Host callback returns forbidden response instead of host
-          return [ 403, [], [ "forbidden" ] ] 
-                                           if $env->{PATH_INFO} =~ m(^/secret);
-
-          return 'http://' . $env->{HTTP_HOST};
-        } );
+        my $app = Plack::App::Proxy->new->to_app;
+        sub {
+            my $env = shift;
+            # Host callback returns forbidden response instead of host
+            return [ 403, [], [ "forbidden" ] ]
+                if $env->{PATH_INFO} =~ m(^/secret);
+            $env->{'plack.proxy.remote'} = 'http://' . $env->{HTTP_HOST};
+            $app->($env);
+        };
       },
       app   => sub { [ 200, [], ["WORLD"] ] },
       client => sub {
@@ -100,7 +104,7 @@ sub run_tests {
   # Don't rewrite the Host header
   test_proxy(
     proxy => sub { Plack::App::Proxy->new(
-      host => "http://$_[0]:$_[1]", preserve_host_header => 1,
+      remote => "http://$_[0]:$_[1]", preserve_host_header => 1,
     ) },
     app    => sub {
       my $env = shift;
@@ -116,21 +120,21 @@ sub run_tests {
     },
   );
 
-  # Get the full URL from a callback. This example is an open proxy, don't do this!
+  # Get the full URL from a middleware. This example is an open proxy, don't do this!
   {
     my ( $app_host, $app_port );
     test_proxy(
       proxy => sub {
         # save the app's host and port for client.
         ( $app_host, $app_port ) = @_;
-        Plack::App::Proxy->new( url => sub {
+        my $app = Plack::App::Proxy->new->to_app;
+        sub {
           my $env = shift;
-
           my ( $url ) = ( $env->{PATH_INFO} =~ m(^\/(https?://.*)) )
-                                        or return [ 403, [], [ "forbidden" ] ];
-
-          return $url;
-        } );
+              or return [ 403, [], [ "forbidden" ] ];
+          $env->{'plack.proxy.url'} = $url;
+          $app->($env);
+        };
       },
       app   => sub { [ 200, [], ["HELLO"] ] },
       client => sub {
@@ -150,7 +154,7 @@ sub run_tests {
 
   # with QUERY_STRING
   test_proxy(
-    proxy => sub { Plack::App::Proxy->new(host => "http://$_[0]:$_[1]") },
+    proxy => sub { Plack::App::Proxy->new(remote => "http://$_[0]:$_[1]") },
     app   => sub {
       my $env = shift;
       is $env->{QUERY_STRING}, 'k1=v1&k2=v2';
@@ -163,6 +167,44 @@ sub run_tests {
       );
       my $res = $cb->($req);
       is $res->content, 'HELLO';
+    },
+  );
+
+  # avoid double slashes
+  test_proxy(
+    proxy => sub { Plack::App::Proxy->new(remote => "http://$_[0]:$_[1]/") },
+    app   => sub {
+      my $env = shift;
+      return [ 200, [], [ $env->{PATH_INFO} ] ];
+    },
+    client => sub {
+      my $cb = shift;
+      my $req = HTTP::Request->new(
+        GET => "http://localhost/foo",
+      );
+      my $res = $cb->($req);
+      is $res->content, '/foo';
+    },
+  );
+
+  # redirect
+  test_proxy(
+    proxy => sub { Plack::App::Proxy->new(remote => "http://$_[0]:$_[1]") },
+    app   => sub {
+      my $env = shift;
+      if( $env->{PATH_INFO} eq '/index.html' ){
+        return [ 302, [
+          Location => 'http://' . $env->{HTTP_HOST} . '/hello.html' 
+          ], [] ];
+      }
+      return [ 200, [], [ "HELLO" ] ];
+    },
+    client => sub {
+      my $cb = shift;
+      my $req = HTTP::Request->new( GET => "http://localhost/index.html" );
+      my $res = $cb->($req);
+      like $res->header( 'Location' ), qr(\bhello\.html), 
+           "pass the Location header to the client directly";
     },
   );
 }
