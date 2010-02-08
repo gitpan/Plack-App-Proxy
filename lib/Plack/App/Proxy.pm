@@ -8,7 +8,7 @@ use HTTP::Headers;
 use Try::Tiny;
 use AnyEvent::HTTP;
 
-our $VERSION = '0.11';
+our $VERSION = '0.12';
 
 # hop-by-hop headers (see also RFC2616)
 my @hop_by_hop = qw(
@@ -195,7 +195,7 @@ Specifies the base remote URL to proxy requests to.
 This proxies incoming requests for C</example/bar> proxied to
 C<http://example.com/app/foo/bar>.
 
-=head1 preserve_host_header
+=item preserve_host_header
 
 Preserves the original Host header, which is useful when you do
 reverse proxying to the internal hosts.

@@ -4,8 +4,7 @@ author:
   - 'Lee Aylward'
 build_requires:
   ExtUtils::MakeMaker: 6.42
-  Test::More: 0.88
-  Test::Requires: 0
+  Test::More: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
@@ -21,10 +20,10 @@ no_index:
     - t
 requires:
   AnyEvent::HTTP: 1.44
-  HTTP::Headers: 0
-  Plack: 0.9028
+  LWP: 0
+  Plack: 0
   Plack::Request: 0
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/leedo/Plack-App-Proxy.git
-version: 0.11
+version: 0.03
