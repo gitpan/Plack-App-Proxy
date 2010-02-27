@@ -8,7 +8,7 @@ use HTTP::Headers;
 use Try::Tiny;
 use AnyEvent::HTTP;
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 
 # hop-by-hop headers (see also RFC2616)
 my @hop_by_hop = qw(
@@ -98,6 +98,7 @@ sub call {
 
                 if (! defined $handle or $headers->{Status} =~ /^59\d+/) {
                     $respond->([502, ["Content-Type","text/html"], ["Gateway error"]]);
+                    $cv->send;
                 }
                 elsif( $handle eq '' ) {
                     # The response didn't have a body.
@@ -105,6 +106,7 @@ sub call {
                         $headers->{Status}, 
                         [$self->response_headers($headers)], []
                     ] );
+                    $cv->send;
                 }
                 else {
                     my $writer = $respond->([
@@ -116,6 +118,9 @@ sub call {
                         $writer->close;
                         $cv->send;
                         undef $handle;  # free the cyclic reference.
+                        # http_request may not release $cb with perl 5.8.8
+                        # and AE::HTTP 1.44. So free $env manually.
+                        undef $env;
                     });
                     $handle->on_error(sub{});
                     $handle->on_read(sub {
