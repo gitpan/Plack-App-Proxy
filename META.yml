@@ -4,11 +4,14 @@ author:
   - 'Lee Aylward'
 build_requires:
   ExtUtils::MakeMaker: 6.42
-  Test::More: 0
+  IO::Socket::INET: 0
+  Test::More: 0.88
+  Test::Requires: 0
+  Test::TCP: 0
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.91'
+generated_by: 'Module::Install version 0.95'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -20,10 +23,9 @@ no_index:
     - t
 requires:
   AnyEvent::HTTP: 1.44
-  LWP: 0
-  Plack: 0
-  Plack::Request: 0
+  HTTP::Headers: 0
+  Plack: 0.9913
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/leedo/Plack-App-Proxy.git
-version: 0.03
+version: 0.14
