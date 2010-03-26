@@ -13,6 +13,7 @@ lib/Plack/App/Proxy.pm
 lib/Plack/App/Proxy/Test.pm
 lib/Plack/Middleware/Proxy/AddVia.pm
 lib/Plack/Middleware/Proxy/Connect.pm
+lib/Plack/Middleware/Proxy/LoadBalancer.pm
 lib/Plack/Middleware/Proxy/RewriteLocation.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -24,4 +25,5 @@ t/deflate.t
 t/filter_headers.t
 t/middleware/addvia.t
 t/middleware/connect.t
+t/middleware/loadbalancer.t
 t/middleware/rewrite.t
