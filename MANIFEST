@@ -26,4 +26,6 @@ t/filter_headers.t
 t/middleware/addvia.t
 t/middleware/connect.t
 t/middleware/loadbalancer.t
+t/middleware/rewrite-auto_guess.t
+t/middleware/rewrite-guess_fails.t
 t/middleware/rewrite.t

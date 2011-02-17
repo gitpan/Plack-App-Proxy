@@ -5,10 +5,9 @@ use parent 'Plack::Component';
 use Plack::Util::Accessor qw/remote preserve_host_header/;
 use Plack::Request;
 use HTTP::Headers;
-use Try::Tiny;
 use AnyEvent::HTTP;
 
-our $VERSION = '0.17';
+our $VERSION = '0.18';
 
 # hop-by-hop headers (see also RFC2616)
 my @hop_by_hop = qw(
@@ -88,6 +87,8 @@ sub call {
             headers => $headers,
             body => $content,
             recurse => 0,  # want not to treat any redirections
+            persistent => 0,
+            proxy => undef, # $ENV{http_proxy} causing test failures
             on_header => sub {
                 my $headers = shift;
 
@@ -112,7 +113,7 @@ sub call {
                 my (undef, $headers) = @_;
 
                 if (!$writer and $headers->{Status} =~ /^59\d/) {
-                    $respond->([502, ["Content-Type","text/html"], ["Gateway error"]]);
+                    $respond->([502, ["Content-Type","text/html"], ["Gateway error: $headers->{Reason}"]]);
                 }
 
                 $writer->close if $writer;
