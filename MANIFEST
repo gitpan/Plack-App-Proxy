@@ -10,6 +10,9 @@ inc/Module/Install/Repository.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/Plack/App/Proxy.pm
+lib/Plack/App/Proxy/Backend.pm
+lib/Plack/App/Proxy/Backend/AnyEvent/HTTP.pm
+lib/Plack/App/Proxy/Backend/LWP.pm
 lib/Plack/App/Proxy/Test.pm
 lib/Plack/Middleware/Proxy/AddVia.pm
 lib/Plack/Middleware/Proxy/Connect.pm

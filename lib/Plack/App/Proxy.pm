@@ -2,12 +2,17 @@ package Plack::App::Proxy;
 
 use strict;
 use parent 'Plack::Component';
-use Plack::Util::Accessor qw/remote preserve_host_header/;
+use Plack::Util::Accessor qw/remote preserve_host_header backend/;
 use Plack::Request;
+use Plack::Util;
 use HTTP::Headers;
-use AnyEvent::HTTP;
 
-our $VERSION = '0.18';
+our $VERSION = '0.19';
+
+sub prepare_app {
+    my $self = shift;
+    $self->backend($ENV{PLACK_PROXY_BACKEND} || 'AnyEvent::HTTP') unless defined $self->backend;
+}
 
 # hop-by-hop headers (see also RFC2616)
 my @hop_by_hop = qw(
@@ -78,58 +83,18 @@ sub call {
     my $method  = $env->{REQUEST_METHOD};
     my $content = $req->content;
 
-    return sub {
-        my $respond = shift;
-        my $cv = AE::cv;
-        my $writer;
-        AnyEvent::HTTP::http_request(
-            $method => $url,
-            headers => $headers,
-            body => $content,
-            recurse => 0,  # want not to treat any redirections
-            persistent => 0,
-            proxy => undef, # $ENV{http_proxy} causing test failures
-            on_header => sub {
-                my $headers = shift;
+    my $backend_class = Plack::Util::load_class(
+        $self->backend, 'Plack::App::Proxy::Backend'
+    );
 
-                if ($headers->{Status} !~ /^59\d+/) {
-                    $env->{'plack.proxy.last_protocol'} = $headers->{HTTPVersion};
-                    $env->{'plack.proxy.last_status'}   = $headers->{Status};
-                    $env->{'plack.proxy.last_reason'}   = $headers->{Reason};
-                    $env->{'plack.proxy.last_url'}      = $headers->{URL};
-
-                    $writer = $respond->([
-                        $headers->{Status},
-                        [$self->response_headers($headers)],
-                    ]);
-                }
-                return 1;
-            },
-            on_body => sub {
-              $writer->write($_[0]);
-              return 1;
-            },
-            sub {
-                my (undef, $headers) = @_;
-
-                if (!$writer and $headers->{Status} =~ /^59\d/) {
-                    $respond->([502, ["Content-Type","text/html"], ["Gateway error: $headers->{Reason}"]]);
-                }
-
-                $writer->close if $writer;
-                $cv->send;
-
-                # http_request may not release $cb with perl 5.8.8
-                # and AE::HTTP 1.44. So free $env manually.
-                undef $env;
-
-                # Free the reference manually for perl 5.8.x
-                # to avoid nested closure memory leaks.
-                undef $respond;
-            }
-        );
-        $cv->recv unless $env->{"psgi.nonblocking"};
-    }
+    return $backend_class->new(
+        url              => $url,
+        req              => $req,
+        headers          => $headers,
+        method           => $method,
+        content          => $content,
+        response_headers => sub { $self->response_headers(@_) },
+    )->call($env);
 }
 
 sub response_headers {
@@ -199,6 +164,11 @@ C<http://example.com/app/foo/bar>.
 Preserves the original Host header, which is useful when you do
 reverse proxying to the internal hosts.
 
+=item backend
+
+The HTTP backend to use. This dist comes with C<LWP> and C<AnyEvent::HTTP>
+backends. C<AnyEvent::HTTP> is the default if no backend is specified.
+
 =back
 
 =head1 MIDDLEWARE CONFIGURATIONS
@@ -250,6 +220,8 @@ Lee Aylward
 Masahiro Honma
 
 Tatsuhiko Miyagawa
+
+Jesse Luehrs
 
 =head1 LICENSE
 
