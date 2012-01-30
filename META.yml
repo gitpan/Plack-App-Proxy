@@ -28,5 +28,5 @@ requires:
   Plack: 0.9913
 resources:
   license: http://dev.perl.org/licenses/
-  repository: git://github.com/leedo/Plack-App-Proxy.git
-version: 0.19
+  repository: origin
+version: 0.20
