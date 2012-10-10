@@ -7,7 +7,7 @@ use Plack::Request;
 use Plack::Util;
 use HTTP::Headers;
 
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 sub prepare_app {
     my $self = shift;
@@ -104,6 +104,9 @@ sub response_headers {
         map { $_ => $ae_headers->{$_} } grep {! /^[A-Z]/} keys %$ae_headers
     );
     $self->filter_headers( $headers );
+
+    # Remove PSGI forbidden headers
+    $headers->remove_header('Status');
 
     my @headers;
     $headers->scan( sub { push @headers, @_ } );
