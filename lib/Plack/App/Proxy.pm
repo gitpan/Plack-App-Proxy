@@ -7,7 +7,7 @@ use Plack::Request;
 use Plack::Util;
 use HTTP::Headers;
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 sub prepare_app {
     my $self = shift;
@@ -62,8 +62,7 @@ sub build_headers_from_env {
     $headers->remove_header("Host") unless $self->preserve_host_header;
     $self->filter_headers( $headers );
 
-    # Just assume HTTP::Headers is a blessed hash ref
-    +{%$headers};
+    +{ map {$_ => scalar $headers->header($_) } $headers->header_field_names };
 }
 
 sub call {
