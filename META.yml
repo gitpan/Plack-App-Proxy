@@ -3,13 +3,13 @@ abstract: 'proxy requests'
 author:
   - 'Lee Aylward'
 build_requires:
-  ExtUtils::MakeMaker: 6.36
+  ExtUtils::MakeMaker: 6.59
   IO::Socket::INET: 0
   Test::More: 0.88
   Test::Requires: 0
   Test::TCP: 0
 configure_requires:
-  ExtUtils::MakeMaker: 6.36
+  ExtUtils::MakeMaker: 6.59
 distribution_type: module
 dynamic_config: 1
 generated_by: 'Module::Install version 1.06'
@@ -27,7 +27,8 @@ requires:
   HTTP::Headers: 0
   LWP::UserAgent: 0
   Plack: 0.9913
+  perl: 5.8.1
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/leedo/Plack-App-Proxy.git
-version: 0.23
+version: 0.25
