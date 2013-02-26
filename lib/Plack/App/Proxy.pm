@@ -8,7 +8,7 @@ use Plack::Request;
 use Plack::Util;
 use HTTP::Headers;
 
-our $VERSION = '0.26';
+our $VERSION = '0.27';
 
 sub prepare_app {
     my $self = shift;
@@ -97,11 +97,8 @@ sub call {
 }
 
 sub response_headers {
-    my ($self, $ae_headers) = @_;
+    my ($self, $headers) = @_;
 
-    my $headers = HTTP::Headers->new( 
-        map { $_ => $ae_headers->{$_} } grep {! /^[A-Z]/} keys %$ae_headers
-    );
     $self->filter_headers( $headers );
 
     # Remove PSGI forbidden headers
