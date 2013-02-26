@@ -8,7 +8,7 @@ use Plack::Request;
 use Plack::Util;
 use HTTP::Headers;
 
-our $VERSION = '0.25';
+our $VERSION = '0.26';
 
 sub prepare_app {
     my $self = shift;
@@ -76,7 +76,6 @@ sub call {
     my $url = $self->build_url_from_env($env)
         or return [502, ["Content-Type","text/html"], ["Can't determine proxy remote URL"]];
 
-    # TODO: make sure Plack::Request recalculates psgi.input when it's reset
     my $req = Plack::Request->new($env);
     my $headers = $self->build_headers_from_env($env, $req);
 
